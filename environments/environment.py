@@ -6,12 +6,10 @@ import gym
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
-import tracemalloc
 
-from environments import cameras
-from tasks import utils
-from environments.robots import UR10E_Robotiq140
-from environments import pybullet_utils
+from simulation.environments import cameras
+from simulation.environments.robots import UR10E_Robotiq140
+from simulation.environments import pybullet_utils
 
 
 PLACE_STEP = 0.0003

@@ -3,8 +3,8 @@
 import os
 
 import numpy as np
-from tasks.task import Task
-from tasks import utils
+from simulation.tasks.task import Task
+from simulation.tasks import utils
 
 import pybullet as p
 

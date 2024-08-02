@@ -1,5 +1,5 @@
-from primitives.base import Primitive
 import numpy as np
+from simulation.primitives.base import Primitive
 
 
 class Pick(Primitive):

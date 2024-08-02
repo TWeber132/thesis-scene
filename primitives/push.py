@@ -1,6 +1,6 @@
-from primitives.base import Primitive
-from tasks import utils
 import numpy as np
+from simulation.primitives.base import Primitive
+from simulation.tasks import utils
 
 
 class Push(Primitive):

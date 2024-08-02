@@ -1,15 +1,13 @@
 import os
-
 import numpy as np
-from tasks.task import Task
-from primitives.pick_and_place import Pick
-from agents.oracle_agent import OracleAgent
-from scipy.signal import correlate
-from tasks import utils
-import matplotlib.pyplot as plt
-
 import pybullet as p
 import time
+from scipy.signal import correlate
+
+from simulation.tasks import utils
+from simulation.tasks.task import Task
+from simulation.primitives.pick_and_place import Pick
+from simulation.agents.oracle_agent import OracleAgent
 
 
 class PickingSeenGoogleObjectsSeq(Task):

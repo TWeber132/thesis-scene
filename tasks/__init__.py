@@ -15,11 +15,11 @@
 # from cliport.tasks.align_rope import AlignRope
 # from cliport.tasks.packing_boxes import PackingBoxes
 # from cliport.tasks.packing_shapes import PackingShapes
-from tasks.packing_boxes_pairs import PackingBoxesPairsSeenColors
+from simulation.tasks.packing_boxes_pairs import PackingBoxesPairsSeenColors
 # from cliport.tasks.packing_boxes_pairs import PackingBoxesPairsUnseenColors
 # from cliport.tasks.packing_boxes_pairs import PackingBoxesPairsFull
-from tasks.packing_google_objects import PackingSeenGoogleObjectsSeq
-from tasks.picking_google_objects import PickingSeenGoogleObjectsSeq
+from simulation.tasks.packing_google_objects import PackingSeenGoogleObjectsSeq
+from simulation.tasks.picking_google_objects import PickingSeenGoogleObjectsSeq
 # from cliport.tasks.packing_google_objects import PackingUnseenGoogleObjectsSeq
 # from cliport.tasks.packing_google_objects import PackingSeenGoogleObjectsGroup
 # from cliport.tasks.packing_google_objects import PackingUnseenGoogleObjectsGroup

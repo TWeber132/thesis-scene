@@ -8,7 +8,7 @@ hydra:
     dir: ${docker_volume_dir}
 
 data_dir: ${shared_docker_volume_dir}/storage/data  # where to store dataset
-assets_root: ${docker_volume_dir}/environments/assets/
+assets_root: ${docker_volume_dir}/simulation/environments/assets/
 disp: True  # visualize PyBullet
 shared_memory: False
 task: picking-seen-google-objects-seq

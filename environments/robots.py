@@ -3,9 +3,8 @@ import time
 import numpy as np
 import pybullet as p
 
-
-from environments.grippers import Robotiq140
-from environments.pybullet_utils import JointInfo
+from simulation.environments.grippers import Robotiq140
+from simulation.environments.pybullet_utils import JointInfo
 
 
 UR10E_URDF_PATH = "robot/ur10e.urdf"

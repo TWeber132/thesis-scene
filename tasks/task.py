@@ -1,20 +1,17 @@
 """Base Task class."""
 
-import collections
 import os
 import random
 import string
 import tempfile
-
 import cv2
 import numpy as np
-from environments import cameras
-from primitives.pick_and_place import PickAndPlace
-from agents.oracle_agent import OracleAgent
-from tasks import utils
-
 import pybullet as p
-import matplotlib.pyplot as plt
+
+from simulation.environments import cameras
+from simulation.primitives.pick_and_place import PickAndPlace
+from simulation.agents.oracle_agent import OracleAgent
+from simulation.tasks import utils
 
 
 class Task():
