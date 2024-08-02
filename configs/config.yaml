@@ -1,7 +1,0 @@
-# Shared Config
-
-docker_volume_dir: "/home/robot/docker_volume"
-shared_docker_volume_dir: "/home/robot/shared_docker_volume"
-
-tag: default
-debug: False
