@@ -8,4 +8,5 @@ __pycache__/
 environments/assets/*
 !environments/assets/robot/
 !environments/assets/meshes/
+!environments/assets/util/
 !environments/assets/google_objects_download.sh
