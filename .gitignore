@@ -1,0 +1,14 @@
+*.pyc
+*.log
+.hydra/
+0_VRDemoSettings.txt
+__pycache__/
+
+# Don't ignore important assets
+environments/assets/*
+!environments/assets/robot/
+!environments/assets/meshes/
+!environments/assets/google/
+environments/assets/google/meshes/
+environments/assets/google/meshes_fixed/
+environments/assets/google/textures/

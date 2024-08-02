@@ -1,0 +1,149 @@
+<?xml version="1.0" ?>
+
+<robot name="ur10e_cell">
+    <material name="gray">
+        <color rgba="0.7 0.7 0.7 1"/>
+    </material>
+    <material name="black">
+        <color rgba="0 0 0 1"/>
+    </material>
+    <material name="darkgray">
+        <color rgba="0.2 0.2 0.2 1"/>
+    </material>
+    <material name="aluminum">
+        <color rgba="0.5 0.5 0.5 1"/>
+    </material>
+    <material name="w-gray">
+        <color rgba="0.4 0.4 0.4 1.0"/>
+    </material>
+    <material name="plastic">
+        <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+    <material name="UR-blue">
+        <color rgba="0.376 0.576 0.674 1.0"/>
+    </material>
+    <material name="white">
+        <color rgba="1.0 1.0 1.0 1.0"/>
+    </material>
+    <material name="glass">
+        <color rgba="1.0 1.0 1.0 0.0"/>
+    </material>
+    
+    <link name="world"/>
+
+    <joint name="platform_joint" type="fixed">
+        <origin rpy="0 0 0.0" xyz="0.0 0.0 0.0125"/>
+        <parent link="world"/>
+        <child link="platform_link"/>
+    </joint>
+    <link name="platform_link">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 -0.0125"/>
+            <geometry>
+                <box size="0.34 0.34 0.025"/>
+            </geometry>
+            <material name="none">
+                <color rgba="0 0 0 0"/>
+            </material>
+        </visual>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 -0.0125"/>
+            <mass value="0.01"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 -0.0125"/>
+            <geometry>
+                <box size="0.34 0.34 0.025"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="table_joint" type="fixed">
+        <origin rpy="0 0 0" xyz="0.455 0.0 -0.973"/>
+        <parent link="platform_link"/>
+        <child link="table_link"/>
+    </joint>
+    <link name="table_link">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <rolling_friction value="0.001"/>
+            <inertia_scaling value="2"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="0.01"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="-0.63 -0.4025 0"/>
+            <geometry>
+                <mesh filename="../meshes/table.stl" scale="0.001 0.001 0.001"/>
+            </geometry>
+            <material name="gray"/>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0.474"/>
+            <geometry>
+                <box size="1.26 0.805 0.948"/>
+            </geometry>
+        </collision>
+    </link>
+    
+
+    <joint name="board_joint" type="fixed">
+        <origin rpy="0 0 0.0" xyz="0.2 0.0 0.948"/>
+        <parent link="table_link"/>
+        <child link="board_link"/>
+    </joint>
+    <link name="board_link">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="0"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="0.684 0.64 0.025"/>
+            </geometry>
+            <material name="darkgray"/>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="0.684 0.64 0.025"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="warehouse_joint" type="fixed">
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <parent link="table_link"/>
+        <child link="warehouse_link"/>
+    </joint>
+    <link name="warehouse_link">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="../meshes/warehouse.stl" scale="0.0001 0.0001 0.0001"/>
+            </geometry>
+            <material name="w-gray"/>
+        </visual>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="0.01"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="14.0 14.0 0.01"/>
+            </geometry>
+        </collision>
+    </link>
+</robot>
