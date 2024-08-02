@@ -18,12 +18,11 @@ from omegaconf import OmegaConf
 
 import os
 # import torch
-import tensorflow as tf
-
 
 # -----------------------------------------------------------------------------
 # HEIGHTMAP UTILS
 # -----------------------------------------------------------------------------
+
 
 def get_heightmap(points, colors, bounds, pixel_size):
     """Get top-down (z-axis) orthographic heightmap image from 3D pointcloud.
@@ -901,6 +900,7 @@ def set_seed(seed, tf=False):
     #     import torch
     #     torch.manual_seed(seed)
     if tf:
+        import tensorflow as tf
         tf.random.set_seed(seed)
 
 
