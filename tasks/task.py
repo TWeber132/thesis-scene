@@ -8,10 +8,10 @@ import cv2
 import numpy as np
 import pybullet as p
 
-from simulation.environments import cameras
-from simulation.primitives.pick_and_place import PickAndPlace
-from simulation.agents.oracle_agent import OracleAgent
-from simulation.tasks import utils
+from ..environments import cameras
+from ..primitives.pick_and_place import PickAndPlace
+from ..agents.oracle_agent import OracleAgent
+from ..tasks import utils
 
 
 class Task():

@@ -3,13 +3,13 @@
 import os
 
 import numpy as np
-from simulation.tasks.task import Task
-from simulation.tasks import utils
+from . import task
+from . import utils
 
 import pybullet as p
 
 
-class PackingSeenGoogleObjectsSeq(Task):
+class PackingSeenGoogleObjectsSeq(task.Task):
     """Packing Seen Google Objects Group base class and task."""
 
     def __init__(self):

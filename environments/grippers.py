@@ -4,7 +4,7 @@ import numpy as np
 import pybullet as p
 from scipy.ndimage import rotate
 
-from simulation.environments.pybullet_utils import JointInfo
+from .pybullet_utils import JointInfo
 
 
 ROBOTIQ140_URDF = "robot/robotiq140.urdf"

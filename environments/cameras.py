@@ -2,7 +2,7 @@
 
 import numpy as np
 import pybullet as p
-from simulation.tasks.utils import get_pose_on_sphere
+from ..tasks.utils import get_pose_on_sphere
 
 
 class RealSenseD415():

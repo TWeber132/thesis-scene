@@ -1,5 +1,3 @@
-"""Ravens tasks."""
-
 # from cliport.tasks.align_box_corner import AlignBoxCorner
 # from cliport.tasks.assembling_kits import AssemblingKits
 # from cliport.tasks.assembling_kits import AssemblingKitsEasy
@@ -15,11 +13,11 @@
 # from cliport.tasks.align_rope import AlignRope
 # from cliport.tasks.packing_boxes import PackingBoxes
 # from cliport.tasks.packing_shapes import PackingShapes
-from simulation.tasks.packing_boxes_pairs import PackingBoxesPairsSeenColors
+# from ..tasks import PackingBoxesPairsSeenColors
 # from cliport.tasks.packing_boxes_pairs import PackingBoxesPairsUnseenColors
 # from cliport.tasks.packing_boxes_pairs import PackingBoxesPairsFull
-from simulation.tasks.packing_google_objects import PackingSeenGoogleObjectsSeq
-from simulation.tasks.picking_google_objects import PickingSeenGoogleObjectsSeq
+# from ..tasks import PackingSeenGoogleObjectsSeq
+# from ..tasks import PickingSeenGoogleObjectsSeq
 # from cliport.tasks.packing_google_objects import PackingUnseenGoogleObjectsSeq
 # from cliport.tasks.packing_google_objects import PackingSeenGoogleObjectsGroup
 # from cliport.tasks.packing_google_objects import PackingUnseenGoogleObjectsGroup
@@ -66,11 +64,11 @@ names = {
     # 'assembling-kits-seq-unseen-colors': AssemblingKitsSeqUnseenColors,
     # 'assembling-kits-seq-full': AssemblingKitsSeqFull,
     # 'packing-shapes': PackingShapes,
-    'packing-boxes-pairs-seen-colors': PackingBoxesPairsSeenColors,
+    # 'packing-boxes-pairs-seen-colors': PackingBoxesPairsSeenColors,
     # 'packing-boxes-pairs-unseen-colors': PackingBoxesPairsUnseenColors,
     # 'packing-boxes-pairs-full': PackingBoxesPairsFull,
-    'packing-seen-google-objects-seq': PackingSeenGoogleObjectsSeq,
-    'picking-seen-google-objects-seq': PickingSeenGoogleObjectsSeq,
+    # 'packing-seen-google-objects-seq': PackingSeenGoogleObjectsSeq,
+    # 'picking-seen-google-objects-seq': PickingSeenGoogleObjectsSeq,
     # 'packing-unseen-google-objects-seq': PackingUnseenGoogleObjectsSeq,
     # 'packing-seen-google-objects-group': PackingSeenGoogleObjectsGroup,
     # 'packing-unseen-google-objects-group': PackingUnseenGoogleObjectsGroup,

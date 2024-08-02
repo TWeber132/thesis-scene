@@ -1,4 +1,4 @@
-from simulation.agents.base import Agent
+from .base import Agent
 from typing import Callable, Dict
 
 

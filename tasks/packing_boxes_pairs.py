@@ -3,13 +3,13 @@
 import os
 
 import numpy as np
-from simulation.tasks.task import Task
-from simulation.tasks import utils
+from . import task
+from . import utils
 
 import pybullet as p
 
 
-class PackingBoxesPairsUnseenColors(Task):
+class PackingBoxesPairsUnseenColors(task.Task):
     """Packing Box Pairs task."""
 
     def __init__(self):

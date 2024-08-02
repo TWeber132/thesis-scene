@@ -4,13 +4,13 @@ import pybullet as p
 import time
 from scipy.signal import correlate
 
-from simulation.tasks import utils
-from simulation.tasks.task import Task
-from simulation.primitives.pick_and_place import Pick
-from simulation.agents.oracle_agent import OracleAgent
+from . import task
+from . import utils
+from ..primitives.pick_and_place import Pick
+from ..agents.oracle_agent import OracleAgent
 
 
-class PickingSeenGoogleObjectsSeq(Task):
+class PickingSeenGoogleObjectsSeq(task.Task):
     def __init__(self):
         super().__init__()
         self.max_steps = 1

@@ -7,9 +7,9 @@ import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
 
-from simulation.environments import cameras
-from simulation.environments.robots import UR10E_Robotiq140
-from simulation.environments import pybullet_utils
+from .cameras import NeRFCameraFactory
+from .robots import UR10E_Robotiq140
+from ..environments import pybullet_utils
 
 
 PLACE_STEP = 0.0003
@@ -53,7 +53,7 @@ class Environment(gym.Env):
         self.pix_size = 0.003125
         self.obj_ids = {'fixed': [], 'rigid': [], 'deformable': []}
         self.obj_urdfs = {}
-        cam_factory = cameras.NeRFCameraFactory()
+        cam_factory = NeRFCameraFactory()
         self.agent_cams = [cam_factory.create().CONFIG[0] for i in range(50)]
         self.record_cfg = record_cfg
         self.save_video = False

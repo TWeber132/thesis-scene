@@ -1,4 +1,4 @@
-from simulation.agents.base import Agent
+from .base import Agent
 
 
 class MLAgent(Agent):
