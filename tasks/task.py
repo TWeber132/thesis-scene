@@ -156,6 +156,7 @@ class Task():
                 free[obj_mask == obj_id] = 0
         free[0, :], free[:, 0], free[-1, :], free[:, -1] = 0, 0, 0, 0
         free = cv2.erode(free, np.ones((erode_size, erode_size), np.uint8))
+
         if np.sum(free) == 0:
             return None, None
         pix = utils.sample_distribution(np.float32(free))

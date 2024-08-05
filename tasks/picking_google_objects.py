@@ -350,13 +350,9 @@ class PickingSeenGoogleObjectsSeq(task.Task):
                 for yaw in range(90, -90, step_size):
                     # NOTE: The gripper filter heavily relies on the chosen end effector of the robot
                     gripper_filter = env.robot.ee.get_gripper_filter(yaw)
-                    # plt.imshow(gripper_filter)
-                    # plt.show()
                     obj_mask_fil = correlate(
                         obj_mask, gripper_filter, mode='same')
                     obj_mask_fil = np.clip(obj_mask_fil, 0, 255)
-                    # plt.imshow(obj_mask_fil)
-                    # plt.show()
                     pick_mask = np.uint8(obj_mask_fil == obj_uid)
                     pick_mask_score = np.sum(pick_mask)
                     if pick_mask_score > 0:
