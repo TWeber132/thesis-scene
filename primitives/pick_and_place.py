@@ -1,13 +1,13 @@
 import numpy as np
+from typing import Dict
 from .base import Primitive
 
 
 class Pick(Primitive):
     def __init__(self) -> None:
-        self.type = "pick"
+        super.__init__()
         self.app_height = 0.45
         self.pre_height = 0.10
-        self.trajectory = []
 
     def __call__(self, robot, action) -> bool:
         if len(action) != 1:
@@ -35,23 +35,7 @@ class Pick(Primitive):
         timeout |= robot.movep((app_pos, app_rot), speed=0.001)
         return timeout
 
-    def save_last_robot_trajectory_to_list(self, robot, n_elements: int = 150):
-        """Saves last robot trajectory to a list "self.trajectory" and extends the list with each new trajectory. List has to be reset for every new primitive call.
-
-        Args:
-            robot (UR10E_Robotiq140): the robot that drove the trajectory
-            n_elements (int, optional): the number of elements/poses each trajectory should at most consist of, number can be lower when trajectory does not have enough elements. Defaults to 150.
-        """
-        has_n_elements = len(robot.last_movej_trajectory)
-        n_elements = min(n_elements, has_n_elements)
-        idx = np.round(np.linspace(
-            0, has_n_elements - 1, n_elements)).astype(np.int32)
-        robot_last_trajectory = np.array(
-            robot.last_movej_trajectory, dtype=object)
-        self.trajectory.extend(
-            [traj for traj in robot_last_trajectory[idx]])
-
-    def get_action_names(self):
+    def get_action_names(self) -> Dict:
         return {
             'train': [
                 'pick up',
@@ -100,10 +84,9 @@ class Pick(Primitive):
 
 class Place(Primitive):
     def __init__(self) -> None:
-        self.type = "place"
+        super.__init__()
         self.app_height = 0.45
         self.pre_height = 0.10
-        self.trajectory = []
 
     def __call__(self, robot, action) -> bool:
         if len(action) != 1:
@@ -125,12 +108,14 @@ class Place(Primitive):
 
 class PickAndPlace(Primitive):
     def __init__(self) -> None:
-        self.type = "pick_and_place"
-        self.pick = Pick(at_key="pose0")
-        self.place = Place(at_key="pose1")
-        self.trajectory = []
+        super.__init__()
+        self.pick = Pick()
+        self.place = Place()
 
     def __call__(self, robot, action) -> bool:
+        if len(action) != 2:
+            raise ValueError(
+                "Action for pick primitive has to contain one pick and one place pose")
         robot.home()
         robot.ee.open()
         timeout = self.pick(robot, action)

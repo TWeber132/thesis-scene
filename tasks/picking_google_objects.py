@@ -4,17 +4,15 @@ import pybullet as p
 import time
 from scipy.signal import correlate
 
-from . import task
 from . import utils
+from .task import Task
 from ..primitives.pick_and_place import Pick
 from ..agents.oracle_agent import OracleAgent
 
 
-class PickingSeenGoogleObjectsSeq(task.Task):
-    def __init__(self):
-        super().__init__()
-        self.max_steps = 1
-        self.n_tries = 50
+class PickSeenGoogleObjects(Task):
+    def __init__(self, info=None):
+        super().__init__(info)
         self.primitive = Pick()
         self.lang_template = "{act} {obj}"
         self.obj_names = self.get_object_names()
@@ -202,7 +200,7 @@ class PickingSeenGoogleObjectsSeq(task.Task):
             ],
         }
 
-    def reset(self, env):
+    def reset(self, env) -> None:
         super().reset(env)
 
         # object names

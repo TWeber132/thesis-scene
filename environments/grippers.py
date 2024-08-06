@@ -10,6 +10,11 @@ from .pybullet_utils import JointInfo
 ROBOTIQ140_URDF = "robot/robotiq140.urdf"
 
 
+class Endeffector():
+    def __init__(self, assets_root, env, robot_uid, ee_joint_id):
+        pass
+
+
 class Robotiq140():
     def __init__(self, assets_root, env, robot_uid, flange_id):
         # Load gripper

@@ -9,7 +9,7 @@ import numpy as np
 import pybullet as p
 
 from ..environments import cameras
-from ..primitives.pick_and_place import PickAndPlace
+from ..primitives.base import Primitive
 from ..agents.oracle_agent import OracleAgent
 from ..tasks import utils
 
@@ -18,28 +18,19 @@ class Task():
     """Base Task class."""
 
     def __init__(self, info=None):
-        self.from_info = info
+        self.info = info
         self.mode = 'train'
-        self.sixdof = False
-        self.primitive = PickAndPlace
+        self.primitive = Primitive
         self.oracle_cams = cameras.Oracle.CONFIG
-
-        # Evaluation epsilons (for pose evaluation metric).
-        self.pos_eps = 0.01
-        self.rot_eps = np.deg2rad(15)
-
         # Workspace bounds.
         self.pix_size = 0.003125
         self.bounds = np.array([[0.32, 0.98],
                                 [-0.32, 0.32],
                                 [-0.1, 0.3]])
-
         self.goals = []
         self.lang_goals = []
         self.task_completed_desc = "task completed."
-        self.progress = 0
         self._rewards = 0
-
         self.assets_root = None
 
     def reset(self, env):
@@ -48,15 +39,14 @@ class Task():
                              'call set_assets_root().')
         self.goals = []
         self.lang_goals = []
-        self.progress = 0  # Task progression metric in range [0, 1].
         self._rewards = 0  # Cumulative returned rewards.
 
-        if self.from_info:
+        if self.info:
             self.recreate_from_info()
             return
 
     def recreate_from_info(self):
-        for key, item in self.from_info:
+        for key, item in self.info:
             self.add_object(item[-1], pose=(item[0], item[1]))
         print("Recreated Task from info")
 
@@ -75,7 +65,7 @@ class Task():
     # Reward Function and Task Completion Metrics
     # -------------------------------------------------------------------------
 
-    def reward(self):
+    def reward(self, env):
         raise NotImplementedError
 
     def done(self):
@@ -103,23 +93,23 @@ class Task():
     # Environment Helper Functions
     # -------------------------------------------------------------------------
 
-    def is_match(self, pose0, pose1, symmetry):
-        """Check if pose0 and pose1 match within a threshold."""
+    # def is_match(self, pose0, pose1, symmetry):
+    #     """Check if pose0 and pose1 match within a threshold."""
 
-        # Get translational error.
-        diff_pos = np.float32(pose0[0][:2]) - np.float32(pose1[0][:2])
-        dist_pos = np.linalg.norm(diff_pos)
+    #     # Get translational error.
+    #     diff_pos = np.float32(pose0[0][:2]) - np.float32(pose1[0][:2])
+    #     dist_pos = np.linalg.norm(diff_pos)
 
-        # Get rotational error around z-axis (account for symmetries).
-        diff_rot = 0
-        if symmetry > 0:
-            rot0 = np.array(utils.quatXYZW_to_eulerXYZ(pose0[1]))[2]
-            rot1 = np.array(utils.quatXYZW_to_eulerXYZ(pose1[1]))[2]
-            diff_rot = np.abs(rot0 - rot1) % symmetry
-            if diff_rot > (symmetry / 2):
-                diff_rot = symmetry - diff_rot
+    #     # Get rotational error around z-axis (account for symmetries).
+    #     diff_rot = 0
+    #     if symmetry > 0:
+    #         rot0 = np.array(utils.quatXYZW_to_eulerXYZ(pose0[1]))[2]
+    #         rot1 = np.array(utils.quatXYZW_to_eulerXYZ(pose1[1]))[2]
+    #         diff_rot = np.abs(rot0 - rot1) % symmetry
+    #         if diff_rot > (symmetry / 2):
+    #             diff_rot = symmetry - diff_rot
 
-        return (dist_pos < self.pos_eps) and (diff_rot < self.rot_eps)
+    #     return (dist_pos < self.pos_eps) and (diff_rot < self.rot_eps)
 
     def get_true_image(self, env):
         """Get RGB-D orthographic heightmaps and segmentation masks."""
@@ -197,41 +187,41 @@ class Task():
             file.write(fdata)
         return fname
 
-    def get_random_size(self, min_x, max_x, min_y, max_y, min_z, max_z):
-        """Get random box size."""
-        size = np.random.rand(3)
-        size[0] = size[0] * (max_x - min_x) + min_x
-        size[1] = size[1] * (max_y - min_y) + min_y
-        size[2] = size[2] * (max_z - min_z) + min_z
-        return tuple(size)
+    # def get_random_size(self, min_x, max_x, min_y, max_y, min_z, max_z):
+    #     """Get random box size."""
+    #     size = np.random.rand(3)
+    #     size[0] = size[0] * (max_x - min_x) + min_x
+    #     size[1] = size[1] * (max_y - min_y) + min_y
+    #     size[2] = size[2] * (max_z - min_z) + min_z
+    #     return tuple(size)
 
-    def get_box_object_points(self, obj):
-        obj_shape = p.getVisualShapeData(obj)
-        obj_dim = obj_shape[0][3]
-        obj_dim = tuple(d for d in obj_dim)
-        xv, yv, zv = np.meshgrid(
-            np.arange(-obj_dim[0] / 2, obj_dim[0] / 2, 0.02),
-            np.arange(-obj_dim[1] / 2, obj_dim[1] / 2, 0.02),
-            np.arange(-obj_dim[2] / 2, obj_dim[2] / 2, 0.02),
-            sparse=False, indexing='xy')
-        return np.vstack((xv.reshape(1, -1), yv.reshape(1, -1), zv.reshape(1, -1)))
+    # def get_box_object_points(self, obj):
+    #     obj_shape = p.getVisualShapeData(obj)
+    #     obj_dim = obj_shape[0][3]
+    #     obj_dim = tuple(d for d in obj_dim)
+    #     xv, yv, zv = np.meshgrid(
+    #         np.arange(-obj_dim[0] / 2, obj_dim[0] / 2, 0.02),
+    #         np.arange(-obj_dim[1] / 2, obj_dim[1] / 2, 0.02),
+    #         np.arange(-obj_dim[2] / 2, obj_dim[2] / 2, 0.02),
+    #         sparse=False, indexing='xy')
+    #     return np.vstack((xv.reshape(1, -1), yv.reshape(1, -1), zv.reshape(1, -1)))
 
-    def get_mesh_object_points(self, obj):
-        mesh = p.getMeshData(obj)
-        mesh_points = np.array(mesh[1])
-        mesh_dim = np.vstack(
-            (mesh_points.min(axis=0), mesh_points.max(axis=0)))
-        xv, yv, zv = np.meshgrid(
-            np.arange(mesh_dim[0][0], mesh_dim[1][0], 0.02),
-            np.arange(mesh_dim[0][1], mesh_dim[1][1], 0.02),
-            np.arange(mesh_dim[0][2], mesh_dim[1][2], 0.02),
-            sparse=False, indexing='xy')
-        return np.vstack((xv.reshape(1, -1), yv.reshape(1, -1), zv.reshape(1, -1)))
+    # def get_mesh_object_points(self, obj):
+    #     mesh = p.getMeshData(obj)
+    #     mesh_points = np.array(mesh[1])
+    #     mesh_dim = np.vstack(
+    #         (mesh_points.min(axis=0), mesh_points.max(axis=0)))
+    #     xv, yv, zv = np.meshgrid(
+    #         np.arange(mesh_dim[0][0], mesh_dim[1][0], 0.02),
+    #         np.arange(mesh_dim[0][1], mesh_dim[1][1], 0.02),
+    #         np.arange(mesh_dim[0][2], mesh_dim[1][2], 0.02),
+    #         sparse=False, indexing='xy')
+    #     return np.vstack((xv.reshape(1, -1), yv.reshape(1, -1), zv.reshape(1, -1)))
 
-    def color_random_brown(self, obj):
-        shade = np.random.rand() + 0.5
-        color = np.float32([shade * 156, shade * 117, shade * 95, 255]) / 255
-        p.changeVisualShape(obj, -1, rgbaColor=color)
+    # def color_random_brown(self, obj):
+    #     shade = np.random.rand() + 0.5
+    #     color = np.float32([shade * 156, shade * 117, shade * 95, 255]) / 255
+    #     p.changeVisualShape(obj, -1, rgbaColor=color)
 
     def set_assets_root(self, assets_root):
         self.assets_root = assets_root
