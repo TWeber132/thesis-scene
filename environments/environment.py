@@ -8,8 +8,8 @@ import pybullet as p
 import matplotlib.pyplot as plt
 
 from .cameras import NeRFCameraFactory
-from .robots import UR10E_Robotiq140
-from ..environments import pybullet_utils
+from ..robots.ur10e import UR10E
+from .. import pybullet_utils
 
 
 PLACE_STEP = 0.0003
@@ -182,8 +182,8 @@ class Environment(gym.Env):
             body_uid=self.uid, joint_name="platform_joint")
 
         # Load robot and reset it
-        self.robot = UR10E_Robotiq140(
-            assets_root=self.assets_root, env=self, env_uid=self.uid, base_id=platform_joint_id)
+        self.robot = UR10E(
+            assets_root=self.assets_root, env=self, env_uid=self.uid, base_joint_id=platform_joint_id)
         self.robot.reset()
 
         # Reset task.

@@ -5,8 +5,8 @@
 __pycache__/
 
 # Don't ignore important assets
-environments/assets/*
-!environments/assets/robot/
-!environments/assets/meshes/
-!environments/assets/util/
-!environments/assets/google_objects_download.sh
+assets/*
+!assets/robot/
+!assets/meshes/
+!assets/util/
+!assets/google_objects_download.sh
