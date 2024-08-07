@@ -3,16 +3,22 @@ import cv2
 import imageio
 import numpy as np
 import pybullet as p
+from typing import Tuple, Any
 
-
+from ..robots.robot_builder import RobotBuilder
 from ..robots.ur10e import UR10E
+from ..end_effectors.robotiq140 import Robotiq140
 from ..pybullet_utils.joint_info_list import JointInfoList
 
 
 class Environment():
+    task: Any
     env_urdf_path: str
+    uid: int
+    robot: Any
     agent_cams: list
-    robot_joint_name: str
+    env_robot_joint_name: str
+    env_robot_joint_id: int
 
     def __init__(self,
                  assets_root,
@@ -81,13 +87,13 @@ class Environment():
             self.connected_to_bullet = False
 
     @property
-    def is_static(self):
+    def is_static(self) -> bool:
         """Return true if objects are no longer moving."""
         v = [np.linalg.norm(p.getBaseVelocity(i)[0])
              for i in self.obj_ids['rigid']]
         return all(np.array(v) < 5e-3)
 
-    def add_object(self, urdf, pose, category='rigid'):
+    def add_object(self, urdf, pose, category='rigid') -> int:
         """List of (fixed, rigid, or deformable) objects in env."""
         fixed_base = 1 if category == 'fixed' else 0
         obj_id = p.loadURDF(
@@ -100,7 +106,7 @@ class Environment():
             self.obj_urdfs[obj_id] = urdf
         return obj_id
 
-    def seed(self, seed=None):
+    def seed(self, seed=None) -> None:
         self._random = np.random.RandomState(seed)
         return seed
 
@@ -121,11 +127,12 @@ class Environment():
         self.uid = p.loadURDF(os.path.join(
             self.assets_root, self.env_urdf_path))
         joint_info_list = JointInfoList(self.uid)
-        robot_joint_id = joint_info_list.get_joint_id(self.robot_joint_name)
+        self.env_robot_joint_id = joint_info_list.get_joint_id(
+            self.env_robot_joint_name)
 
-        # Load robot and reset it
-        self.robot = UR10E(
-            assets_root=self.assets_root, env=self, env_uid=self.uid, base_joint_id=robot_joint_id)
+        # Build robot and reset it
+        robot_builder = RobotBuilder(self, UR10E, Robotiq140)
+        self.robot = robot_builder.get_robot()
         self.robot.reset()
 
         # Reset task.
@@ -134,7 +141,7 @@ class Environment():
         # Re-enable rendering.
         p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1)
 
-    def restore(self):
+    def restore(self) -> Tuple[dict, dict]:
         # Load state if there is any
         if (self.state_id >= 0):
             p.restoreState(self.state_id)
@@ -154,7 +161,7 @@ class Environment():
 
         return obs, info
 
-    def step(self, action=None):
+    def step(self, action=None) -> Tuple[float, bool]:
         """Execute action with specified primitive.
 
         Args:
@@ -180,14 +187,14 @@ class Environment():
         done = self.task.done()
         return reward, done
 
-    def step_simulation(self):
+    def step_simulation(self) -> None:
         p.stepSimulation()
         self.step_counter += 1
 
         if self.save_video and self.step_counter % 5 == 0:
             self.add_video_frame()
 
-    def render_camera(self, config, image_size=None, shadow=1):
+    def render_camera(self, config, image_size=None, shadow=1) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Render RGB-D image with specified camera configuration."""
         if not image_size:
             image_size = config['image_size']
@@ -243,7 +250,7 @@ class Environment():
         return color, depth, segm
 
     @property
-    def info(self):
+    def info(self) -> dict:
         info = {}  # object id : (position, rotation, dimensions, urdf)
         for obj_ids in self.obj_ids.values():
             for obj_id in obj_ids:
@@ -254,17 +261,17 @@ class Environment():
 
         return info
 
-    def set_task(self, task):
+    def set_task(self, task) -> None:
         task.set_assets_root(self.assets_root)
         self.task = task
 
-    def get_lang_goal(self):
+    def get_lang_goal(self) -> str:
         if self.task:
             return self.task.get_lang_goal()
         else:
             raise Exception("No task for was set")
 
-    def start_rec(self, video_filename):
+    def start_rec(self, video_filename) -> None:
         assert self.record_cfg
 
         # make video directory
@@ -284,14 +291,14 @@ class Environment():
         p.setRealTimeSimulation(False)
         self.save_video = True
 
-    def end_rec(self):
+    def end_rec(self) -> None:
         if hasattr(self, 'video_writer'):
             self.video_writer.close()
 
         p.setRealTimeSimulation(True)
         self.save_video = False
 
-    def add_video_frame(self):
+    def add_video_frame(self) -> None:
         # Render frame.
         config = self.agent_cams[0]
         image_size = (self.record_cfg['video_height'],
@@ -333,7 +340,7 @@ class Environment():
 
         self.video_writer.append_data(color)
 
-    def _get_obs(self):
+    def _get_obs(self) -> dict:
         # Get RGB-D camera image observations.
         obs = {'color': (), 'depth': ()}
         for config in self.agent_cams:

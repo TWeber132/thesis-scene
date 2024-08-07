@@ -15,6 +15,7 @@ class EndEffector(ABC):
     base_joint_id: int
     ee_urdf_path: str
     uid: int
+    tcp_joint_name: int
     joint_info_list: list
     revolute_joint_list: list
     contact_joint_names: list

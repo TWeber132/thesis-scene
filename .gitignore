@@ -3,10 +3,5 @@
 .hydra/
 0_VRDemoSettings.txt
 __pycache__/
+assets/google
 
-# Don't ignore important assets
-assets/*
-!assets/robot/
-!assets/meshes/
-!assets/util/
-!assets/google_objects_download.sh

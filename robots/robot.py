@@ -15,10 +15,9 @@ class Robot(ABC):
     uid: int
     joint_info_list: list
     revolute_joint_list: list
-    ee_joint_name: str
-    ee_joint_id: int
+    robot_ee_joint_name: str
+    robot_ee_joint_id: int
     ee: Any
-    tcp_joint_name: str
     tcp_joint_id: int
     home_j: np.ndarray
     last_trajectory: list
@@ -39,10 +38,14 @@ class Robot(ABC):
         self.joint_info_list = JointInfoList(self.uid)
         self.revolute_joint_list = self.joint_info_list.get_revolute_joint_list()
 
-        self.ee_joint_id = self.joint_info_list.get_joint_id(
-            self.ee_joint_name)
+        self.robot_ee_joint_id = self.joint_info_list.get_joint_id(
+            self.robot_ee_joint_name)
+
+    def set_tcp_joint(self, tcp_joint_name):
+        # Calculate ik to correct tcp joint (including end effector)
+        # NOTE: tcp_joint_name depends on the chosen end effector
         self.tcp_joint_id = self.joint_info_list.get_joint_id(
-            self.tcp_joint_name)
+            tcp_joint_name)
 
     def reset(self) -> None:
         for idx, joint in enumerate(self.revolute_joint_list):

@@ -14,8 +14,11 @@ class Robotiq140(EndEffector):
         self.home_j = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.leading_joint_range = [0.0, 0.7]
 
-        self.ee_urdf_path = "robot/robotiq140.urdf"
+        self.ee_urdf_path = "end_effectors/robotiq140.urdf"
         self.load_ee()
+        # NOTE: For every new end effector with a tcp that deviates from
+        # this one, define the new tcp_joint inside the robot.urdf
+        self.tcp_joint_name = "robotiq140_tcp_joint"
 
         # URDF specific
         self.contact_joint_names = ['left_inner_finger_pad_joint',
