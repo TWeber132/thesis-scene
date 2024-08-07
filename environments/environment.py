@@ -1,32 +1,23 @@
 import os
-import tempfile
 import cv2
 import imageio
-import gym
-import time
 import numpy as np
 import pybullet as p
-import matplotlib.pyplot as plt
 
-from .cameras import NeRFCameraFactory
+
 from ..robots.ur10e import UR10E
 from ..pybullet_utils.joint_info_list import JointInfoList
 
 
-PLACE_STEP = 0.0003
-PLACE_DELTA_THRESHOLD = 0.005
-
-ENV_URDF_PATH = "robot/ur10e_cell.urdf"
-
-
-class Environment(gym.Env):
-    """OpenAI Gym-style environment class."""
+class Environment():
+    env_urdf_path: str
+    agent_cams: list
+    robot_joint_name: str
 
     def __init__(self,
                  assets_root,
                  task=None,
                  disp=False,
-                 shared_memory=False,
                  hz=240,
                  record_cfg=None):
         """Creates OpenAI Gym-style environment with PyBullet.
@@ -46,82 +37,35 @@ class Environment(gym.Env):
         if task:
             self.set_task(task)
         self.disp = disp
-        self.shared_memory = shared_memory
         self.hz = hz
-        self.record_cfg = record_cfg
-
-        self.env_urdf_path = ENV_URDF_PATH
-        self.pix_size = 0.003125
-        self.obj_ids = {'fixed': [], 'rigid': [], 'deformable': []}
-        self.obj_urdfs = {}
-        cam_factory = NeRFCameraFactory()
-        self.agent_cams = [cam_factory.create().CONFIG[0] for i in range(50)]
         self.record_cfg = record_cfg
         self.save_video = False
         self.step_counter = 0
-        self.primitive_steps = []
+        self.pix_size = 0.003125
+        self.obj_ids = {'fixed': [], 'rigid': [], 'deformable': []}
+        self.obj_urdfs = {}
+        self.primitive_trajectory = []
+        self.connected_to_bullet = False
         self.state_id = -1
-
-        color_tuple = [
-            gym.spaces.Box(0, 255, config['image_size'] + (3,), dtype=np.uint8)
-            for config in self.agent_cams
-        ]
-        depth_tuple = [
-            gym.spaces.Box(0.0, 20.0, config['image_size'], dtype=np.float32)
-            for config in self.agent_cams
-        ]
-        self.observation_space = gym.spaces.Dict({
-            'color': gym.spaces.Tuple(color_tuple),
-            'depth': gym.spaces.Tuple(depth_tuple),
-        })
-        self.position_bounds = gym.spaces.Box(
-            low=np.array([-10.25, -10.5, 10.9], dtype=np.float32),
-            high=np.array([-10.75, 10.5, 11.2], dtype=np.float32),
-            shape=(3,),
-            dtype=np.float32)
-        self.action_space = gym.spaces.Dict({
-            'pose0':
-                gym.spaces.Tuple(
-                    (self.position_bounds,
-                     gym.spaces.Box(-11.0, 11.0, shape=(4,), dtype=np.float32))),
-            'pose1':
-                gym.spaces.Tuple(
-                    (self.position_bounds,
-                     gym.spaces.Box(-11.0, 11.0, shape=(4,), dtype=np.float32)))
-        })
-
-        # Start PyBullet.
-        self.connect_bullet_sim()
 
     def __del__(self):
         if hasattr(self, 'video_writer'):
             self.video_writer.close()
+        self.disconnect_bullet()
 
-    def connect_bullet_sim(self):
+    def connect_bullet(self) -> None:
         disp_option = p.DIRECT
         if self.disp:
             disp_option = p.GUI
-        if self.shared_memory:
-            disp_option = p.SHARED_MEMORY
-        client = p.connect(disp_option)
-        file_io = p.loadPlugin('fileIOPlugin', physicsClientId=client)
-        if file_io < 0:
-            raise RuntimeError('pybullet: cannot load FileIO!')
-        if file_io >= 0:
-            p.executePluginCommand(
-                file_io,
-                textArgument=self.assets_root,
-                intArgs=[p.AddFileIOAction],
-                physicsClientId=client)
 
+        p.connect(disp_option)
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         p.setPhysicsEngineParameter(enableFileCaching=0,
                                     deterministicOverlappingPairs=1)
-        p.setAdditionalSearchPath(self.assets_root)
-        p.setAdditionalSearchPath(tempfile.gettempdir())
         p.setTimeStep(1. / self.hz)
+        p.setGravity(0, 0, -9.8)
 
-        # If using --disp, move default camera closer to the scene.
+        # Move default camera closer to the scene.
         if self.disp:
             target = p.getDebugVisualizerCamera()[11]
             p.resetDebugVisualizerCamera(
@@ -129,6 +73,12 @@ class Environment(gym.Env):
                 cameraYaw=0,
                 cameraPitch=-25,
                 cameraTargetPosition=target)
+        self.connected_to_bullet = True
+
+    def disconnect_bullet(self) -> None:
+        if self.connected_to_bullet:
+            p.disconnect()
+            self.connected_to_bullet = False
 
     @property
     def is_static(self):
@@ -150,27 +100,19 @@ class Environment(gym.Env):
             self.obj_urdfs[obj_id] = urdf
         return obj_id
 
-    # ---------------------------------------------------------------------------
-    # Standard Gym Functions
-    # ---------------------------------------------------------------------------
-
     def seed(self, seed=None):
         self._random = np.random.RandomState(seed)
         return seed
 
     def reset(self):
-        """Performs common reset functionality for all supported tasks."""
         if not self.task:
             raise ValueError('environment task must be set. Call set_task or pass '
                              'the task arg in the environment constructor.')
         self.obj_ids = {'fixed': [], 'rigid': [], 'deformable': []}
         self.state_id = -1
-        # Reset and disconnect
-        p.resetSimulation()
-        p.disconnect()
         # Reconnect
-        self.connect_bullet_sim()
-        p.setGravity(0, 0, -9.8)
+        self.disconnect_bullet()
+        self.connect_bullet()
 
         # Temporarily disable rendering to load scene faster.
         p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0)
@@ -179,11 +121,11 @@ class Environment(gym.Env):
         self.uid = p.loadURDF(os.path.join(
             self.assets_root, self.env_urdf_path))
         joint_info_list = JointInfoList(self.uid)
-        platform_joint_id = joint_info_list.get_joint_id("platform_joint")
+        robot_joint_id = joint_info_list.get_joint_id(self.robot_joint_name)
 
         # Load robot and reset it
         self.robot = UR10E(
-            assets_root=self.assets_root, env=self, env_uid=self.uid, base_joint_id=platform_joint_id)
+            assets_root=self.assets_root, env=self, env_uid=self.uid, base_joint_id=robot_joint_id)
         self.robot.reset()
 
         # Reset task.
@@ -302,14 +244,6 @@ class Environment(gym.Env):
 
     @property
     def info(self):
-        """Environment info variable with object poses, dimensions, and colors."""
-
-        # Some tasks create and remove zones, so ignore those IDs.
-        # removed_ids = []
-        # if (isinstance(self.task, tasks.names['cloth-flat-notarget']) or
-        #         isinstance(self.task, tasks.names['bag-alone-open'])):
-        #   removed_ids.append(self.task.zone_id)
-
         info = {}  # object id : (position, rotation, dimensions, urdf)
         for obj_ids in self.obj_ids.values():
             for obj_id in obj_ids:
