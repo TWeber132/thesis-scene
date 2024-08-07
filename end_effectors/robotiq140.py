@@ -21,21 +21,21 @@ class Robotiq140(EndEffector):
         self.contact_joint_names = ['left_inner_finger_pad_joint',
                                     'right_inner_finger_pad_joint']
         self.check_joints()
-        assert len(self.home_j) == self.n_joints
-        self.mimic_leading_joint()
+        assert len(self.home_j) == len(self.revolute_joint_list)
+        self.create_mimic_joint_contraints()
 
-    def mimic_leading_joint(self) -> None:
-        leading_joint_name = 'left_outer_knuckle_joint'
-        self.leading_joint_id = [
-            joint.id for joint in self.joints_info if joint.name == leading_joint_name][0]
+    def create_mimic_joint_contraints(self) -> None:
+        self.leading_joint_id = self.joint_info_list.get_joint_id(
+            'left_outer_knuckle_joint')
 
-        following_joint_names_and_multiplier = {'right_outer_knuckle_joint': 1,
-                                                'left_inner_knuckle_joint': 1,
-                                                'right_inner_knuckle_joint': 1,
-                                                'left_inner_finger_joint': -1,
-                                                'right_inner_finger_joint': -1}
-        following_joint_ids_and_multiplier = {
-            joint.id: following_joint_names_and_multiplier[joint.name] for joint in self.joints_info if joint.name in following_joint_names_and_multiplier}
+        following_joint_ids_and_multiplier = {self.joint_info_list.get_joint_id('right_outer_knuckle_joint'): 1,
+                                              self.joint_info_list.get_joint_id('left_inner_knuckle_joint'): 1,
+                                              self.joint_info_list.get_joint_id('right_inner_knuckle_joint'): 1,
+                                              self.joint_info_list.get_joint_id('left_inner_finger_joint'): -1,
+                                              self.joint_info_list.get_joint_id('right_inner_finger_joint'): -1}
+        # NOTE: The order in which the contraints are created is very important
+        following_joint_ids_and_multiplier = dict(
+            sorted(following_joint_ids_and_multiplier.items()))
 
         for joint_id, multiplier in following_joint_ids_and_multiplier.items():
             c = p.createConstraint(parentBodyUniqueId=self.uid,
@@ -46,7 +46,7 @@ class Robotiq140(EndEffector):
                                    jointAxis=[0, 1, 0],
                                    parentFramePosition=[0, 0, 0],
                                    childFramePosition=[0, 0, 0])
-            # Note: the mysterious `erp` is of EXTREME importance
+            # NOTE: The mysterious `erp` is of EXTREME importance
             p.changeConstraint(c, gearRatio=multiplier, maxForce=10000, erp=1)
 
     def move_m(self) -> bool:

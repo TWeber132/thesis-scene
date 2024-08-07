@@ -18,7 +18,7 @@ class UR10E(Robot):
         # Calculate ik to (including end effector)
         self.tcp_joint_name = "tcp_joint"
         self.check_joints()
-        assert len(self.home_j) == self.n_joints
+        assert len(self.home_j) == len(self.revolute_joint_list)
 
         # Initialize Endeffector
         self.ee = Robotiq140(assets_root=assets_root, env=self.env,

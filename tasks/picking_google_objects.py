@@ -13,6 +13,7 @@ from ..agents.oracle_agent import OracleAgent
 class PickSeenGoogleObjects(Task):
     def __init__(self, info=None):
         super().__init__(info)
+
         self.primitive = Pick()
         self.lang_template = "{act} {obj}"
         self.obj_names = self.get_object_names()

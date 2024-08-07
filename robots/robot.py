@@ -5,7 +5,7 @@ import pybullet as p
 
 from abc import ABC, abstractmethod
 from typing import Any
-from ..pybullet_utils import JointInfo
+from ..pybullet_utils.joint_info_list import JointInfoList
 
 
 class Robot(ABC):
@@ -13,8 +13,8 @@ class Robot(ABC):
     env: Any
     robot_urdf_path: str
     uid: int
-    joints_info: list
-    n_joints: int
+    joint_info_list: list
+    revolute_joint_list: list
     ee_joint_name: str
     ee_joint_id: int
     ee: Any
@@ -36,22 +36,17 @@ class Robot(ABC):
                               flags=p.URDF_USE_SELF_COLLISION | p.URDF_USE_MATERIAL_COLORS_FROM_MTL)
 
     def check_joints(self) -> None:
-        # Save all controllable joints
-        _n_urdf_joints = p.getNumJoints(self.uid)
-        _urdf_joints_info = [p.getJointInfo(self.uid, i)
-                             for i in range(_n_urdf_joints)]
-        self.joints_info = [JointInfo(j[0], j[1].decode("utf-8"), j[10], j[11])
-                            for j in _urdf_joints_info if j[2] == p.JOINT_REVOLUTE]
-        self.n_joints = len(self.joints_info)
+        self.joint_info_list = JointInfoList(self.uid)
+        self.revolute_joint_list = self.joint_info_list.get_revolute_joint_list()
 
-        self.ee_joint_id = [j[0] for j in _urdf_joints_info if j[1].decode(
-            "utf-8") == self.ee_joint_name][0]
-        self.tcp_joint_id = [j[0] for j in _urdf_joints_info if j[1].decode(
-            "utf-8") == self.tcp_joint_name][0]
+        self.ee_joint_id = self.joint_info_list.get_joint_id(
+            self.ee_joint_name)
+        self.tcp_joint_id = self.joint_info_list.get_joint_id(
+            self.tcp_joint_name)
 
     def reset(self) -> None:
-        for i in range(self.n_joints):
-            p.resetJointState(self.uid, self.joints_info[i].id, self.home_j[i])
+        for idx, joint in enumerate(self.revolute_joint_list):
+            p.resetJointState(self.uid, joint.id, self.home_j[idx])
         self.ee.reset()
 
     def home(self) -> None:
@@ -68,7 +63,7 @@ class Robot(ABC):
         t0 = time.time()
         while (time.time() - t0) < timeout:
             curr_s = p.getJointStates(
-                self.uid, [joint.id for joint in self.joints_info])
+                self.uid, [joint.id for joint in self.revolute_joint_list])
             curr_j = [current_state[0] for current_state in curr_s]
             curr_j = np.array(curr_j)
 
@@ -84,10 +79,10 @@ class Robot(ABC):
             norm = np.linalg.norm(diff_j)
             v = diff_j / norm if norm > 0 else 0
             step_j = curr_j + v * speed
-            gains = np.ones(self.n_joints)
+            gains = np.ones(len(self.revolute_joint_list))
             p.setJointMotorControlArray(
                 bodyIndex=self.uid,
-                jointIndices=[joint.id for joint in self.joints_info],
+                jointIndices=[joint.id for joint in self.revolute_joint_list],
                 controlMode=p.POSITION_CONTROL,
                 targetPositions=step_j,
                 positionGains=gains)
@@ -100,8 +95,6 @@ class Robot(ABC):
         return True
 
     def move_p(self, pose, speed=0.01) -> bool:
-        # self.env.add_object(
-        #     urdf='util/coordinate_axes.urdf', pose=pose, category='fixed')
         targ_j = self.solve_ik(pose)
         return self.move_j(targ_j, speed)
 

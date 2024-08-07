@@ -3,13 +3,14 @@ import tempfile
 import cv2
 import imageio
 import gym
+import time
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
 
 from .cameras import NeRFCameraFactory
 from ..robots.ur10e import UR10E
-from .. import pybullet_utils
+from ..pybullet_utils.joint_info_list import JointInfoList
 
 
 PLACE_STEP = 0.0003
@@ -139,8 +140,7 @@ class Environment(gym.Env):
     def add_object(self, urdf, pose, category='rigid'):
         """List of (fixed, rigid, or deformable) objects in env."""
         fixed_base = 1 if category == 'fixed' else 0
-        obj_id = pybullet_utils.load_urdf(
-            p,
+        obj_id = p.loadURDF(
             os.path.join(self.assets_root, urdf),
             pose[0],
             pose[1],
@@ -178,8 +178,8 @@ class Environment(gym.Env):
         # Load Env urdf
         self.uid = p.loadURDF(os.path.join(
             self.assets_root, self.env_urdf_path))
-        platform_joint_id = pybullet_utils.get_joint_id(
-            body_uid=self.uid, joint_name="platform_joint")
+        joint_info_list = JointInfoList(self.uid)
+        platform_joint_id = joint_info_list.get_joint_id("platform_joint")
 
         # Load robot and reset it
         self.robot = UR10E(

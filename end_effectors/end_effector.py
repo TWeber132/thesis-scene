@@ -5,7 +5,7 @@ from scipy.ndimage import rotate
 
 from typing import Any
 from abc import ABC, abstractmethod
-from ..pybullet_utils import JointInfo
+from ..pybullet_utils.joint_info_list import JointInfoList
 
 
 class EndEffector(ABC):
@@ -15,8 +15,8 @@ class EndEffector(ABC):
     base_joint_id: int
     ee_urdf_path: str
     uid: int
-    joints_info: list
-    n_joints: int
+    joint_info_list: list
+    revolute_joint_list: list
     contact_joint_names: list
     contact_joint_ids: list
     gripper_filter: np.ndarray
@@ -46,16 +46,11 @@ class EndEffector(ABC):
                            childFramePosition=(0, 0, 0))
 
     def check_joints(self) -> None:
-        n_urdf_joints = p.getNumJoints(self.uid)
-        _urdf_joints_info = [p.getJointInfo(
-            self.uid, i) for i in range(n_urdf_joints)]
-        self.joints_info = [JointInfo(j[0], j[1].decode("utf-8"), j[10], j[11])
-                            for j in _urdf_joints_info if j[2] == p.JOINT_REVOLUTE]
-        self.n_joints = len(self.joints_info)
+        self.joint_info_list = JointInfoList(self.uid)
+        self.revolute_joint_list = self.joint_info_list.get_revolute_joint_list()
 
         for joint_name in self.contact_joint_names:
-            joint_id = [joint[0] for joint in _urdf_joints_info if joint[1].decode(
-                "utf-8") == joint_name][0]
+            joint_id = self.joint_info_list.get_joint_id(joint_name)
             p.enableJointForceTorqueSensor(bodyUniqueId=self.uid,
                                            jointIndex=joint_id,
                                            enableSensor=1)
@@ -70,10 +65,10 @@ class EndEffector(ABC):
         ...
 
     def reset(self) -> None:
-        if self.n_joints == 0:
+        if len(self.revolute_joint_list) == 0:
             return
-        for i in range(self.n_joints):
-            p.resetJointState(self.uid, self.joints_info[i].id, self.home_j[i])
+        for idx, joint in enumerate(self.revolute_joint_list):
+            p.resetJointState(self.uid, joint.id, self.home_j[idx])
 
     @abstractmethod
     def create_gripper_filter(self) -> None:
