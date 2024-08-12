@@ -1,5 +1,6 @@
 import numpy as np
-from .base import Primitive
+
+from .primitive import Primitive
 from ..tasks import utils
 
 

@@ -13,6 +13,7 @@ from ..agents.oracle_agent import OracleAgent
 class PickSeenGoogleObjects(Task):
     def __init__(self, info=None):
         super().__init__(info)
+
         self.primitive = Pick()
         self.lang_template = "{act} {obj}"
         self.obj_names = self.get_object_names()
@@ -308,7 +309,7 @@ class PickSeenGoogleObjects(Task):
             return False
 
         # Move to next goal step if current goal step is complete.
-        if obj_airborne(obj_uid) and env.robot.ee.obj_grasped(obj_uid):
+        if obj_airborne(obj_uid) and env.robot.ee.in_contact_with_obj(obj_uid):
             self.goals.pop(0)
             self.lang_goals.pop(0)
             self._rewards += max_reward

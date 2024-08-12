@@ -2,24 +2,27 @@ import os
 import time
 import numpy as np
 import pybullet as p
-from abc import ABC
 
-from .environment import Environment
-from .grippers import Endeffector, Robotiq140
-from .pybullet_utils import JointInfo
+from abc import ABC, abstractmethod
+from typing import Any
+from ..pybullet_utils.joint_info_list import JointInfoList
 
 
 class Robot(ABC):
     assets_root: str
-    env: Environment
+    env: Any
     robot_urdf_path: str
-    uid: int = -1
-    ee_joint_name: str
-    ee: Endeffector
-    tcp_joint_name: str
+    uid: int
+    joint_info_list: list
+    revolute_joint_list: list
+    robot_ee_joint_name: str
+    robot_ee_joint_id: int
+    ee: Any
+    tcp_joint_id: int
     home_j: np.ndarray
     last_trajectory: list
 
+    @abstractmethod
     def __init__(self, assets_root, env, env_uid, base_joint_id) -> None:
         self.assets_root = assets_root
         self.env = env
@@ -27,34 +30,33 @@ class Robot(ABC):
             env_uid, base_joint_id, computeForwardKinematics=True)
         self.last_trajectory = []
 
-    def load_robot(self):
+    def load_robot(self) -> None:
         self.uid = p.loadURDF(os.path.join(self.assets_root, self.robot_urdf_path), self.base_pos, self.base_rot,
                               flags=p.URDF_USE_SELF_COLLISION | p.URDF_USE_MATERIAL_COLORS_FROM_MTL)
 
-    def find_joints(self):
-        # Save all controllable joints
-        _n_urdf_joints = p.getNumJoints(self.uid)
-        _urdf_joints_info = [p.getJointInfo(self.uid, i)
-                             for i in range(_n_urdf_joints)]
-        self.joints_info = [JointInfo(j[0], j[1].decode("utf-8"), j[10], j[11])
-                            for j in _urdf_joints_info if j[2] == p.JOINT_REVOLUTE]
-        self.n_joints = len(self.joints_info)
+    def check_joints(self) -> None:
+        self.joint_info_list = JointInfoList(self.uid)
+        self.revolute_joint_list = self.joint_info_list.get_revolute_joint_list()
 
-        self.ee_joint_id = [j[0] for j in _urdf_joints_info if j[1].decode(
-            "utf-8") == self.ee_joint_name][0]
-        self.tcp_joint_id = [j[0] for j in _urdf_joints_info if j[1].decode(
-            "utf-8") == self.tcp_joint_name][0]
+        self.robot_ee_joint_id = self.joint_info_list.get_joint_id(
+            self.robot_ee_joint_name)
 
-    def reset(self):
-        for i in range(self.n_joints):
-            p.resetJointState(self.uid, self.joints_info[i].id, self.home_j[i])
+    def set_tcp_joint(self, tcp_joint_name):
+        # Calculate ik to correct tcp joint (including end effector)
+        # NOTE: tcp_joint_name depends on the chosen end effector
+        self.tcp_joint_id = self.joint_info_list.get_joint_id(
+            tcp_joint_name)
+
+    def reset(self) -> None:
+        for idx, joint in enumerate(self.revolute_joint_list):
+            p.resetJointState(self.uid, joint.id, self.home_j[idx])
         self.ee.reset()
 
-    def home(self):
+    def home(self) -> None:
         self.move_j(self.home_j)
         self.ee.open()
 
-    def move_j(self, targ_j, speed=0.01, timeout=4.0):
+    def move_j(self, targ_j, speed=0.01, timeout=4.0) -> bool:
         if self.env.save_video:
             timeout = timeout * 50
 
@@ -64,7 +66,7 @@ class Robot(ABC):
         t0 = time.time()
         while (time.time() - t0) < timeout:
             curr_s = p.getJointStates(
-                self.uid, [joint.id for joint in self.joints_info])
+                self.uid, [joint.id for joint in self.revolute_joint_list])
             curr_j = [current_state[0] for current_state in curr_s]
             curr_j = np.array(curr_j)
 
@@ -80,10 +82,10 @@ class Robot(ABC):
             norm = np.linalg.norm(diff_j)
             v = diff_j / norm if norm > 0 else 0
             step_j = curr_j + v * speed
-            gains = np.ones(self.n_joints)
+            gains = np.ones(len(self.revolute_joint_list))
             p.setJointMotorControlArray(
                 bodyIndex=self.uid,
-                jointIndices=[joint.id for joint in self.joints_info],
+                jointIndices=[joint.id for joint in self.revolute_joint_list],
                 controlMode=p.POSITION_CONTROL,
                 targetPositions=step_j,
                 positionGains=gains)
@@ -95,13 +97,11 @@ class Robot(ABC):
             f'Warning: robot movej exceeded {timeout} second timeout. Skipping.')
         return True
 
-    def move_p(self, pose, speed=0.01):
-        # self.env.add_object(
-        #     urdf='util/coordinate_axes.urdf', pose=pose, category='fixed')
-        targj = self.solve_ik(pose)
-        return self.movej(targj, speed)
+    def move_p(self, pose, speed=0.01) -> bool:
+        targ_j = self.solve_ik(pose)
+        return self.move_j(targ_j, speed)
 
-    def solve_ik(self, pose):
+    def solve_ik(self, pose) -> np.ndarray:
         """Calculate joint configuration with inverse kinematics."""
         joints = p.calculateInverseKinematics(
             bodyUniqueId=self.uid,
@@ -118,31 +118,8 @@ class Robot(ABC):
         joints[2:] = (joints[2:] + np.pi) % (2 * np.pi) - np.pi
         return joints
 
-    def get_ee_pose(self):
+    def get_ee_pose(self) -> tuple:
         """This should be in "grippers.py" the moment the tcp link/joint no longer resides inside robot urdf for IK purposes"""
         _, _, _, _, base_pos, base_rot = p.getLinkState(
             self.uid, self.tcp_joint_id, computeForwardKinematics=True)
         return (np.array(base_pos), np.array(base_rot))
-
-
-class UR10E(Robot):
-    def __init__(self, assets_root: str, env, env_uid, base_joint_id) -> None:
-        super.__init__(assets_root, env, env_uid, base_joint_id)
-
-        self.robot_urdf_path = "robot/ur10e.urdf"  # Relative to assets_root
-        self.load_robot()
-
-        # URDF specific
-        # Attach the end effector to
-        self.ee_joint_name = "realsense_mount_base_joint"
-        # Calculate ik to (including end effector)
-        self.tcp_joint_name = "tcp_joint"
-        self.find_joints()
-
-        # Initialize Endeffector
-        self.ee = Robotiq140(assets_root=assets_root, env=self.env,
-                             robot_uid=self.uid, ee_joint_id=self.ee_joint_id)
-
-        # Define home joint positions
-        self.home_j = np.array([0, -0.5, 0.5, -0.5, -0.5, 0]) * np.pi
-        assert len(self.home_j) == self.n_joints

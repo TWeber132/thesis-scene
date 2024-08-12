@@ -9,7 +9,7 @@ import numpy as np
 import pybullet as p
 
 from ..environments import cameras
-from ..primitives.base import Primitive
+from ..primitives.primitive import Primitive
 from ..agents.oracle_agent import OracleAgent
 from ..tasks import utils
 
