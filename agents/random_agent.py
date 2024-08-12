@@ -1,4 +1,4 @@
-from .base import Agent
+from .agent import Agent
 import numpy as np
 import random
 
