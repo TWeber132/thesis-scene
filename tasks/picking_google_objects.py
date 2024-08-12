@@ -448,4 +448,6 @@ class PickSeenGoogleObjects(Task):
             print(f"Random oracle took: {round((time.time()-t0), 4)} s")
             return [pick_pose]
 
-        return OracleAgent(act)
+        oracle_agent = OracleAgent()
+        oracle_agent.set_act_f(act)
+        return oracle_agent
