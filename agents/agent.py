@@ -6,8 +6,6 @@ from abc import ABC, abstractmethod
 
 
 class Agent(ABC):
-    best_yaws: list
-
     @abstractmethod
     def __init__(self) -> None:
         ...
