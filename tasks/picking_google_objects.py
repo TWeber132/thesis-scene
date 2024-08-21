@@ -203,6 +203,8 @@ class PickSeenGoogleObjects(Task):
 
     def reset(self, env) -> None:
         super().reset(env)
+        if self.info != None:
+            return
 
         # object names
         obj_names = self.obj_names[self.mode]

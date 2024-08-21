@@ -42,13 +42,37 @@ class Task():
         self._rewards = 0  # Cumulative returned rewards.
 
         if self.info:
-            self.recreate_from_info()
+            self.recreate_from_info(env)
             return
 
-    def recreate_from_info(self):
-        for key, item in self.info:
-            self.add_object(item[-1], pose=(item[0], item[1]))
+    def recreate_from_info(self, env):
+        for key, item in self.info.items():
+            self.add_object(item[3], pose=(
+                item[0], item[1]), env=env)
         print("Recreated Task from info")
+
+    def add_object(self, name, pose, env):
+        mesh_file = os.path.join(self.assets_root,
+                                 'google',
+                                 'meshes_fixed',
+                                 f'{name}.obj')
+        texture_file = os.path.join(self.assets_root,
+                                    'google',
+                                    'textures',
+                                    f'{name}.png')
+        replace = {'FNAME': (mesh_file,),
+                   'SCALE': [0.5, 0.5, 0.5],
+                   'COLOR': (0.2, 0.2, 0.2)}
+
+        obj_template = 'google/object-template.urdf'
+        urdf = self.fill_template(obj_template, replace)
+        obj_uid = env.add_object(urdf, pose)
+        if os.path.exists(urdf):
+            os.remove(urdf)
+        texture_id = p.loadTexture(texture_file)
+        p.changeVisualShape(
+            obj_uid, -1, textureUniqueId=texture_id)
+        p.changeVisualShape(obj_uid, -1, rgbaColor=[1, 1, 1, 1])
 
     # -------------------------------------------------------------------------
     # Oracle Agent
